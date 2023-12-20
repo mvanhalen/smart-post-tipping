@@ -77,13 +77,8 @@ contract TippingPublicationAction is
         return abi.encode(tipReceiver, currency, tipAmount);
     }
 
-    // function getModuleMetadataURI() external view returns (string memory) {
-    //     return 'yourModuleMetadataUriHere';
-    // }
-    function getModuleMetadataURI()
-        external
-        view
-        override
-        returns (string memory)
-    {}
+    function getModuleMetadataURI() external view returns (string memory) {
+        return 'https://nftz.mypinata.cloud/ipfs/Qmcev1byf4NPPyjki436rZTDVAhrSgKtMecnPHqdvxguYG';
+    }
+    
 }
