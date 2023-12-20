@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 
 import {HubRestricted} from 'lens/HubRestricted.sol';
 import {Types} from 'lens/Types.sol';
-import {IERC20} from 'open-zeppelin/ERC20/IERC20.sol';
+import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
 import {LensModule} from 'lens/LensModule.sol';
 
