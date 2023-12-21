@@ -8,12 +8,14 @@ import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
 import {LensModule} from 'lens/LensModule.sol';
 import {IModuleGlobals} from 'lens/IModuleGlobals.sol';
+import {IModuleRegistry} from 'lens/IModuleRegistry.sol';
 
 contract TippingPublicationAction is
     LensModule,
     HubRestricted,
     IPublicationActionModule
 {
+    
     mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver))
         internal _tipReceivers;
 
@@ -21,9 +23,10 @@ contract TippingPublicationAction is
     error TipAmountCannotBeZero();
 
     IModuleGlobals public immutable MODULE_GLOBALS;
-
+    IModuleRegistry public immutable MODULE_REGISTRY;
     constructor(address hub, address moduleGlobals) HubRestricted(hub) {
         MODULE_GLOBALS = IModuleGlobals(moduleGlobals);
+
     }
 
     function supportsInterface(
