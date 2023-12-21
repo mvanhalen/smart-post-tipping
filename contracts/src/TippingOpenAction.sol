@@ -7,7 +7,6 @@ import {Types} from 'lens/Types.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
 import {LensModule} from 'lens/LensModule.sol';
-
 import {IModuleGlobals} from 'lens/IModuleGlobals.sol';
 
 contract TippingPublicationAction is
