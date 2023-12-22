@@ -21,6 +21,7 @@ contract TippingPublicationAction is
 
     error CurrencyNotWhitelisted();
     error TipAmountCannotBeZero();
+    error TipAmountNotApproved();
 
     IModuleGlobals public immutable MODULE_GLOBALS;
     IModuleRegistry public immutable MODULE_REGISTRY;
@@ -53,9 +54,9 @@ contract TippingPublicationAction is
     function processPublicationAction(
         Types.ProcessActionParams calldata params
     ) external override onlyHub returns (bytes memory) {
-        (address currency, uint96 tipAmount) = abi.decode(
+        (address currency, uint256 tipAmount) = abi.decode(
             params.actionModuleData,
-            (address, uint96)
+            (address, uint256)
         );
 
         if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
@@ -69,18 +70,31 @@ contract TippingPublicationAction is
         address tipReceiver = _tipReceivers[params.publicationActedProfileId][
             params.publicationActedId
         ];
+        bool approved = false;
+        IERC20 ierc = IERC20(currency);
+        uint256 allowance = ierc.allowance(params.transactionExecutor,tipReceiver);
 
-        IERC20(currency).transferFrom(
-            params.transactionExecutor,
-            tipReceiver,
-            tipAmount
-        );
-
+        if(allowance>= tipAmount){
+            approved = true;
+        }else{
+            approved = ierc.approve(params.transactionExecutor,tipAmount);
+        }
+        
+        if(approved){
+            ierc.transferFrom(
+                params.transactionExecutor,
+                tipReceiver,
+                tipAmount
+            );
+        }else{
+            revert TipAmountNotApproved();
+        }
+        
         return abi.encode(tipReceiver, currency, tipAmount);
     }
 
     function getModuleMetadataURI() external view returns (string memory) {
-        return 'https://nftz.mypinata.cloud/ipfs/Qmcev1byf4NPPyjki436rZTDVAhrSgKtMecnPHqdvxguYG';
+        return 'https://nftz.mypinata.cloud/ipfs/QmUMP6eWA7MZL5CeSRULzrALhFKak5BibioXyhoZ4jU6H1';
     }
     
 }

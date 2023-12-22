@@ -19,15 +19,7 @@ contract TippingScript is Script {
         
         address deployedContractAddress = address(tippingPublicationAction);
         console.log(deployedContractAddress);
-        IModuleRegistry moduleRegistry = IModuleRegistry(deployedContractAddress);
-        console.log('check module');
-        bool registered = moduleRegistry.isModuleRegistered(deployedContractAddress);
-        console.log('registered',registered);
-        if(!registered){
-            console.log('register module');
-            bool success = moduleRegistry.registerModule(deployedContractAddress, 1);
-            console.log(success);
-        }
+    
         
         // require(success, "Failed to register module");
         vm.stopBroadcast();
