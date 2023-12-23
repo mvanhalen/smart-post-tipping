@@ -18,7 +18,7 @@ contract TippingPublicationAction is
     
     mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver))
         internal _tipReceivers;
-
+    event Log(string message);
     error CurrencyNotWhitelisted();
     error TipAmountCannotBeZero();
     error TipAmountNotApproved();
@@ -58,7 +58,8 @@ contract TippingPublicationAction is
             params.actionModuleData,
             (address, uint256)
         );
-
+        emit Log(string(abi.encodePacked("processPub currency",currency)));
+        emit Log(string(abi.encodePacked("processPub amount",tipAmount)));
         if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
             revert CurrencyNotWhitelisted();
         }
@@ -70,16 +71,17 @@ contract TippingPublicationAction is
         address tipReceiver = _tipReceivers[params.publicationActedProfileId][
             params.publicationActedId
         ];
+        emit Log(string(abi.encodePacked("processPub tiprec",tipReceiver)));
         bool approved = false;
         IERC20 ierc = IERC20(currency);
-        uint256 allowance = ierc.allowance(params.transactionExecutor,tipReceiver);
-
+        uint256 allowance = ierc.allowance(params.transactionExecutor,address(this));
+        emit Log(string(abi.encodePacked("processPub allowance",allowance)));
         if(allowance>= tipAmount){
             approved = true;
         }else{
             approved = ierc.approve(params.transactionExecutor,tipAmount);
         }
-        
+        emit Log(string(abi.encodePacked("processPub approved",approved)));
         if(approved){
             ierc.transferFrom(
                 params.transactionExecutor,
