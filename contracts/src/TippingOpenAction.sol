@@ -9,13 +9,14 @@ import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
 import {LensModule} from 'lens/LensModule.sol';
 import {IModuleGlobals} from 'lens/IModuleGlobals.sol';
 import {IModuleRegistry} from 'lens/IModuleRegistry.sol';
+import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TippingPublicationAction is
     LensModule,
     HubRestricted,
     IPublicationActionModule
 {
-    
+    using SafeERC20 for IERC20;
     mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver))
         internal _tipReceivers;
     event Log(string message);
@@ -60,21 +61,19 @@ contract TippingPublicationAction is
         );
         emit Log(string(abi.encodePacked("processPub currency",currency)));
         emit Log(string(abi.encodePacked("processPub amount",tipAmount)));
-        if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
-            revert CurrencyNotWhitelisted();
-        }
-
+        // if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
+        //     revert CurrencyNotWhitelisted();
+        // }
         if (tipAmount == 0) {
             revert TipAmountCannotBeZero();
         }
-
         address tipReceiver = _tipReceivers[params.publicationActedProfileId][
             params.publicationActedId
         ];
         emit Log(string(abi.encodePacked("processPub tiprec",tipReceiver)));
         bool approved = false;
         IERC20 ierc = IERC20(currency);
-        uint256 allowance = ierc.allowance(params.transactionExecutor,address(this));
+        uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
         emit Log(string(abi.encodePacked("processPub allowance",allowance)));
         if(allowance>= tipAmount){
             approved = true;
@@ -83,7 +82,7 @@ contract TippingPublicationAction is
         }
         emit Log(string(abi.encodePacked("processPub approved",approved)));
         if(approved){
-            ierc.transferFrom(
+            ierc.safeTransferFrom(
                 params.transactionExecutor,
                 tipReceiver,
                 tipAmount
