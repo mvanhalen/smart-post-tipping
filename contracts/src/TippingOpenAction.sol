@@ -23,6 +23,7 @@ contract TippingPublicationAction is
     error CurrencyNotWhitelisted();
     error TipAmountCannotBeZero();
     error TipAmountNotApproved();
+    error TipUnknownError();
 
     IModuleGlobals public immutable MODULE_GLOBALS;
     IModuleRegistry public immutable MODULE_REGISTRY;
@@ -73,20 +74,21 @@ contract TippingPublicationAction is
         emit Log(string(abi.encodePacked("processPub tiprec",tipReceiver)));
         bool approved = false;
         IERC20 ierc = IERC20(currency);
-        uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
-        emit Log(string(abi.encodePacked("processPub allowance",allowance)));
-        if(allowance>= tipAmount){
-            approved = true;
-        }else{
+        //uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
+        //emit Log(string(abi.encodePacked("processPub allowance",allowance)));
+        //if(allowance>= tipAmount){
+        //    approved = true;
+        //}else{
             approved = ierc.approve(params.transactionExecutor,tipAmount);
-        }
+        //}
         emit Log(string(abi.encodePacked("processPub approved",approved)));
         if(approved){
-            ierc.safeTransferFrom(
-                params.transactionExecutor,
-                tipReceiver,
-                tipAmount
-            );
+            // ierc.safeTransferFrom(
+            //     params.transactionExecutor,
+            //     tipReceiver,
+            //     tipAmount
+            // );
+            revert TipUnknownError();
         }else{
             revert TipAmountNotApproved();
         }
