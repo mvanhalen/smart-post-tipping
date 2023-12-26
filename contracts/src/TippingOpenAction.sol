@@ -8,7 +8,6 @@ import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
 import {LensModule} from 'lens/LensModule.sol';
 import {IModuleGlobals} from 'lens/IModuleGlobals.sol';
-import {IModuleRegistry} from 'lens/IModuleRegistry.sol';
 import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract TippingPublicationAction is
@@ -17,8 +16,7 @@ contract TippingPublicationAction is
     IPublicationActionModule
 {
     using SafeERC20 for IERC20;
-    mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver))
-        internal _tipReceivers;
+    mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver)) internal _tipReceivers;
     event Log(string message);
     error CurrencyNotWhitelisted();
     error TipAmountCannotBeZero();
@@ -26,10 +24,8 @@ contract TippingPublicationAction is
     error TipUnknownError();
 
     IModuleGlobals public immutable MODULE_GLOBALS;
-    IModuleRegistry public immutable MODULE_REGISTRY;
     constructor(address hub, address moduleGlobals) HubRestricted(hub) {
         MODULE_GLOBALS = IModuleGlobals(moduleGlobals);
-
     }
 
     function supportsInterface(
@@ -43,55 +39,53 @@ contract TippingPublicationAction is
     function initializePublicationAction(
         uint256 profileId,
         uint256 pubId,
-        address /* transactionExecutor */,
+        address transactionExecutor,
         bytes calldata data
     ) external override onlyHub returns (bytes memory) {
-        address tipReceiver = abi.decode(data, (address));
+        
+        _tipReceivers[profileId][pubId] = transactionExecutor;
 
-        _tipReceivers[profileId][pubId] = tipReceiver;
-
+        emit Log(string(abi.encodePacked("Post action init",transactionExecutor,profileId,pubId)));
+          
         return data;
     }
-
     function processPublicationAction(
-        Types.ProcessActionParams calldata params
+        Types.ProcessActionParams calldata processActionParams
     ) external override onlyHub returns (bytes memory) {
         (address currency, uint256 tipAmount) = abi.decode(
-            params.actionModuleData,
+            processActionParams.actionModuleData,
             (address, uint256)
         );
-        emit Log(string(abi.encodePacked("processPub currency",currency)));
-        emit Log(string(abi.encodePacked("processPub amount",tipAmount)));
+        emit Log(string(abi.encodePacked("processPub input",currency,tipAmount)));
         // if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
-        //     revert CurrencyNotWhitelisted();
+        //      revert CurrencyNotWhitelisted();
         // }
-        if (tipAmount == 0) {
-            revert TipAmountCannotBeZero();
-        }
-        address tipReceiver = _tipReceivers[params.publicationActedProfileId][
-            params.publicationActedId
-        ];
+
+        // if (tipAmount == 0) {
+        //     revert TipAmountCannotBeZero();
+        // }
+
+        address tipReceiver = _tipReceivers[processActionParams.publicationActedProfileId][processActionParams.publicationActedId];
         emit Log(string(abi.encodePacked("processPub tiprec",tipReceiver)));
-        bool approved = false;
-        IERC20 ierc = IERC20(currency);
-        //uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
-        //emit Log(string(abi.encodePacked("processPub allowance",allowance)));
-        //if(allowance>= tipAmount){
-        //    approved = true;
-        //}else{
-            approved = ierc.approve(params.transactionExecutor,tipAmount);
-        //}
-        emit Log(string(abi.encodePacked("processPub approved",approved)));
-        if(approved){
-            // ierc.safeTransferFrom(
-            //     params.transactionExecutor,
-            //     tipReceiver,
-            //     tipAmount
-            // );
-            revert TipUnknownError();
-        }else{
-            revert TipAmountNotApproved();
-        }
+        // bool approved = false;
+        // IERC20 ierc = IERC20(currency);
+        // //uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
+        // //emit Log(string(abi.encodePacked("processPub allowance",allowance)));
+        // //if(allowance>= tipAmount){
+        // //    approved = true;
+        // //}else{
+        //     approved = ierc.approve(processActionParams.transactionExecutor,tipAmount);
+        // //}
+        // emit Log(string(abi.encodePacked("processPub approved",approved)));
+        // if(approved){
+        //     ierc.safeTransferFrom(
+        //          processActionParams.transactionExecutor,
+        //          tipReceiver,
+        //          tipAmount
+        //     );
+        // }else{
+        //     revert TipAmountNotApproved();
+        // }
         
         return abi.encode(tipReceiver, currency, tipAmount);
     }
