@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.6.0;
 
-import {IERC165} from '../open-zeppelin/IERC165.sol';
+import {IERC165} from '../openzeppelin-contracts/contracts/interfaces/IERC165.sol';
 
 interface ILensModule is IERC165 {
     /// @dev for now we check for keccak('LENS_MODULE');

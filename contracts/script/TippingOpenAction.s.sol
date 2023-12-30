@@ -12,10 +12,11 @@ contract TippingScript is Script {
 
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
+        address moduleRegistry = vm.envAddress("MODULE_REGISTRY");
         address moduleOwner = vm.envAddress("MODULE_OWNER");
         vm.startBroadcast(deployerPrivateKey);
         address lensHubProxyAddress = vm.envAddress("LENS_HUB_PROXY");
-        TippingPublicationAction tippingPublicationAction = new TippingPublicationAction(lensHubProxyAddress, address(moduleOwner));
+        TippingPublicationAction tippingPublicationAction = new TippingPublicationAction(lensHubProxyAddress, address(moduleRegistry),address(moduleOwner));
         
         address deployedContractAddress = address(tippingPublicationAction);
         console.log(deployedContractAddress);

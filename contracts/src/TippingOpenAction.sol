@@ -6,14 +6,14 @@ import {HubRestricted} from 'lens/HubRestricted.sol';
 import {Types} from 'lens/Types.sol';
 import {IERC20} from 'openzeppelin-contracts/contracts/token/ERC20/IERC20.sol';
 import {IPublicationActionModule} from 'lens/IPublicationActionModule.sol';
-import {LensModule} from 'lens/LensModule.sol';
-import {IModuleGlobals} from 'lens/IModuleGlobals.sol';
-import {SafeERC20} from "openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol";
+import {LensModuleMetadata} from 'lens/LensModuleMetadata.sol';
+import {IModuleRegistry} from 'lens/IModuleRegistry.sol';
+import {SafeERC20} from 'openzeppelin-contracts/contracts/token/ERC20/utils/SafeERC20.sol';
 
 contract TippingPublicationAction is
-    LensModule,
     HubRestricted,
-    IPublicationActionModule
+    IPublicationActionModule,
+    LensModuleMetadata
 {
     using SafeERC20 for IERC20;
     mapping(uint256 profileId => mapping(uint256 pubId => address tipReceiver)) internal _tipReceivers;
@@ -23,11 +23,11 @@ contract TippingPublicationAction is
     error TipAmountNotApproved();
     error TipUnknownError();
 
-    IModuleGlobals public immutable MODULE_GLOBALS;
-    constructor(address hub, address moduleGlobals) HubRestricted(hub) {
-        MODULE_GLOBALS = IModuleGlobals(moduleGlobals);
-    }
+    IModuleRegistry public immutable MODULE_REGISTRY;
 
+    constructor(address hub, address moduleRegistry,address moduleOwner) HubRestricted(hub) LensModuleMetadata(moduleOwner){
+        MODULE_REGISTRY = IModuleRegistry(moduleRegistry);
+    }
     function supportsInterface(
         bytes4 interfaceID
     ) public pure override returns (bool) {
@@ -53,13 +53,13 @@ contract TippingPublicationAction is
     function processPublicationAction(
         Types.ProcessActionParams calldata processActionParams
     ) external override onlyHub returns (bytes memory) {
-        (address currency, uint256 tipAmount) = abi.decode(
+        (address currency, uint96 tipAmount) = abi.decode(
             processActionParams.actionModuleData,
-            (address, uint256)
+            (address, uint96)
         );
         emit Log(string(abi.encodePacked("processPub input",currency,tipAmount)));
-        if (!MODULE_GLOBALS.isCurrencyWhitelisted(currency)) {
-             revert CurrencyNotWhitelisted();
+        if (!MODULE_REGISTRY.isErc20CurrencyRegistered(currency)) {
+              revert CurrencyNotWhitelisted();
         }
 
         if (tipAmount == 0) {
@@ -70,14 +70,11 @@ contract TippingPublicationAction is
         emit Log(string(abi.encodePacked("processPub tiprec",tipReceiver)));
         bool approved = false;
         IERC20 ierc = IERC20(currency);
-        // //uint256 allowance = ierc.allowance(address(this),params.transactionExecutor);
-        // //emit Log(string(abi.encodePacked("processPub allowance",allowance)));
-        // //if(allowance>= tipAmount){
-        // //    approved = true;
-        // //}else{
-             approved = ierc.approve(processActionParams.transactionExecutor,tipAmount);
-        // //}
+        
+        approved = ierc.approve(processActionParams.transactionExecutor,tipAmount);
+        
         emit Log(string(abi.encodePacked("processPub approved",approved)));
+        
         if(approved){
             ierc.safeTransferFrom(
                  processActionParams.transactionExecutor,
@@ -91,8 +88,8 @@ contract TippingPublicationAction is
         return abi.encode(tipReceiver, currency, tipAmount);
     }
 
-    function getModuleMetadataURI() external view returns (string memory) {
-        return 'https://nftz.mypinata.cloud/ipfs/QmUMP6eWA7MZL5CeSRULzrALhFKak5BibioXyhoZ4jU6H1';
-    }
+    // function getModuleMetadataURI() override external view returns (string memory) {
+    //     return 'https://nftz.mypinata.cloud/ipfs/QmTityZU2gwWwarhMsDyATjAArg2BYWkgbjPpmNGbNrhQs';
+    // }
     
 }
